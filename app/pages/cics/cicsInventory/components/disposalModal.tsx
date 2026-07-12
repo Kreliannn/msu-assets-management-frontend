@@ -100,7 +100,7 @@ export function DisposalModal({ open, onOpenChange, asset, onSuccess }: Disposal
       formData.append("message", message)
       formData.append("date", date)
       formData.append("college", asset.location || "Main Office")
-      formData.append("recordedBy", "Main Office")
+      formData.append("recordedBy", asset.custodian!)
       formData.append("proof", selectedFile)
       formData.append("assetId", asset._id)
       
@@ -185,20 +185,7 @@ export function DisposalModal({ open, onOpenChange, asset, onSuccess }: Disposal
             />
           </div>
 
-          {/* Recorded By */}
-          <div className="space-y-2">
-            <Label htmlFor="recorded-by" className="flex items-center gap-1.5">
-              <User className="h-3.5 w-3.5 text-muted-foreground" />
-              Recorded By
-            </Label>
-            <Input
-              id="recorded-by"
-              placeholder="Name of person recording the disposal"
-              value={recordedBy}
-              onChange={(e) => setRecordedBy(e.target.value)}
-              required
-            />
-          </div>
+       
 
           {/* Proof Image Upload */}
           <div className="space-y-2">

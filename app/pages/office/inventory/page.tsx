@@ -50,7 +50,17 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-const STATUS_VARIANTS: Record<string, { label: string; icon: typeof Circle; color: string; bg: string }> = {
+import {  HandHelping } from "lucide-react";
+
+const STATUS_VARIANTS: Record<
+  string,
+  {
+    label: string;
+    icon: typeof Circle;
+    color: string;
+    bg: string;
+  }
+> = {
   available: {
     label: "Available",
     icon: BadgeCheck,
@@ -63,7 +73,19 @@ const STATUS_VARIANTS: Record<string, { label: string; icon: typeof Circle; colo
     color: "text-amber-600",
     bg: "bg-amber-500/10",
   },
-}
+  disposed: {
+    label: "Disposed",
+    icon: Trash2,
+    color: "text-red-600",
+    bg: "bg-red-500/10",
+  },
+  borrowed: {
+    label: "Borrowed",
+    icon: HandHelping,
+    color: "text-blue-600",
+    bg: "bg-blue-500/10",
+  },
+};
 
 const CONDITION_VARIANTS: Record<string, { label: string; icon: typeof Circle; color: string; bg: string }> = {
   good: {
@@ -581,6 +603,7 @@ export default function Page() {
         open={disposalDialogOpen}
         onOpenChange={setDisposalDialogOpen}
         asset={disposalAsset}
+        onSuccess={fetchAssets}
       />
 
       {/* QR Scanner Dialog */}

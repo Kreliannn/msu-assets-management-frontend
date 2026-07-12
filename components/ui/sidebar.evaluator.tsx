@@ -23,7 +23,10 @@ const navigationItems = [
   { title: "Dashboard", url: "/pages/evaluator/home", icon: Home },
   { title: "Transfer Request", url: "/pages/evaluator/transferRequest", icon: UserPlus2 },
    { title: "Transfer History", url: "/pages/evaluator/transferHistory", icon: UserPlus2 },
+      { title: "Disposal Record", url: "/pages/evaluator/disposalRecord", icon: UserPlus2 },
 ]
+
+
 
 const accountItems = [
   { title: "Logout", url: "/", icon: LogOut }
