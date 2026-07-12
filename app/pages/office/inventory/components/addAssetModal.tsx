@@ -201,44 +201,44 @@ export function AddAssetModal({ onSuccess }: AddAssetModalProps) {
               />
             </div>
 
-            {/* Category */}
-            <div className="space-y-2">
-              <Label htmlFor="category" className="flex items-center gap-1.5">
-                <Tag className="h-3.5 w-3.5 text-muted-foreground" />
-                Category
-              </Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORIES.map((cat) => (
-                    <SelectItem key={cat} value={cat} className="capitalize">
-                      {cat}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Condition */}
-            <div className="space-y-2">
-              <Label htmlFor="condition" className="flex items-center gap-1.5">
-                <Wrench className="h-3.5 w-3.5 text-muted-foreground" />
-                Condition
-              </Label>
-              <Select value={condition} onValueChange={setCondition}>
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select condition" />
-                </SelectTrigger>
-                <SelectContent>
-                  {CONDITIONS.map((cond) => (
-                    <SelectItem key={cond} value={cond} className="capitalize">
-                      {cond}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            {/* Category & Condition — same row */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="category" className="flex items-center gap-1.5">
+                  <Tag className="h-3.5 w-3.5 text-muted-foreground" />
+                  Category
+                </Label>
+                <Select value={category} onValueChange={setCategory}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIES.map((cat) => (
+                      <SelectItem key={cat} value={cat} className="capitalize">
+                        {cat}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="condition" className="flex items-center gap-1.5">
+                  <Wrench className="h-3.5 w-3.5 text-muted-foreground" />
+                  Condition
+                </Label>
+                <Select value={condition} onValueChange={setCondition}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select condition" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CONDITIONS.map((cond) => (
+                      <SelectItem key={cond} value={cond} className="capitalize">
+                        {cond}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Location */}

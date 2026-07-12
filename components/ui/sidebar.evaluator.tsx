@@ -20,8 +20,9 @@ import {
 import { useQueryClient } from "@tanstack/react-query"
 
 const navigationItems = [
-  { title: "Dashboard", url: "/pages/admin/home", icon: Home },
-  { title: "Employee", url: "/pages/admin/addEmployee", icon: UserPlus2 },
+  { title: "Dashboard", url: "/pages/evaluator/home", icon: Home },
+  { title: "Transfer Request", url: "/pages/evaluator/transferRequest", icon: UserPlus2 },
+   { title: "Transfer History", url: "/pages/evaluator/transferHistory", icon: UserPlus2 },
 ]
 
 const accountItems = [

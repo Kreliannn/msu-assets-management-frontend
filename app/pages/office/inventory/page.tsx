@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react"
 import { AddAssetModal } from "./components/addAssetModal"
+import { AssignAssetModal } from "./components/assignAssetModal"
 import { DisplayQr } from "./components/displayQr"
 import { QrScanner } from "./components/qrScanner"
 import axiosInstance from "@/app/utils/axios"
@@ -35,6 +36,7 @@ import {
   AlertTriangle,
   XCircle,
   Circle,
+  Building2,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import {
@@ -91,6 +93,10 @@ export default function Page() {
   const [qrAsset, setQrAsset] = useState<assetsInterface | null>(null)
   const [qrDialogOpen, setQrDialogOpen] = useState(false)
   const [scannerOpen, setScannerOpen] = useState(false)
+
+  // Assign modal state
+  const [assignAsset, setAssignAsset] = useState<assetsInterface | null>(null)
+  const [assignDialogOpen, setAssignDialogOpen] = useState(false)
 
   // Filter state
   const [searchName, setSearchName] = useState("")
@@ -485,6 +491,18 @@ export default function Page() {
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-amber-600"
+                          onClick={() => {
+                            setAssignAsset(asset)
+                            setAssignDialogOpen(true)
+                          }}
+                          title="Assign Location &amp; Custodian"
+                        >
+                          <Building2 className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-8 w-8 text-muted-foreground hover:text-primary"
                           onClick={() => {
                             setQrAsset(asset)
@@ -494,15 +512,7 @@ export default function Page() {
                         >
                           <QrCode className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          onClick={() => handleDelete(asset._id)}
-                          disabled={deletingId === asset._id}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        
                       </div>
                     </TableCell>
                   </TableRow>
@@ -522,6 +532,13 @@ export default function Page() {
           assetName={qrAsset.name}
         />
       )}
+
+      {/* Assign Location & Custodian Dialog */}
+      <AssignAssetModal
+        open={assignDialogOpen}
+        onOpenChange={setAssignDialogOpen}
+        asset={assignAsset}
+      />
 
       {/* QR Scanner Dialog */}
       <QrScanner
