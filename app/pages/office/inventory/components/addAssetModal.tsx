@@ -31,6 +31,8 @@ import {
   User,
   Tag,
   Wrench,
+  Calendar,
+  Coins,
 } from "lucide-react"
 
 const CATEGORIES = [
@@ -67,6 +69,8 @@ export function AddAssetModal({ onSuccess }: AddAssetModalProps) {
 
   // Form fields
   const [name, setName] = useState("")
+  const [date] = useState(new Date().toISOString().split("T")[0])
+  const [value, setValue] = useState(0)
   const [qr, setQr] = useState(generateQrCode())
   const [category, setCategory] = useState("")
   const [condition, setCondition] = useState("")
@@ -103,6 +107,7 @@ export function AddAssetModal({ onSuccess }: AddAssetModalProps) {
 
   const resetForm = () => {
     setName("")
+    setValue(0)
     setQr(generateQrCode())
     setCategory("")
     setCondition("")
@@ -134,6 +139,8 @@ export function AddAssetModal({ onSuccess }: AddAssetModalProps) {
       const response = await axiosInstance.post("/asset", {
         name,
         qr,
+        date,
+        value,
         category,
         location,
         condition,
@@ -186,19 +193,48 @@ export function AddAssetModal({ onSuccess }: AddAssetModalProps) {
           </DialogHeader>
 
           <div className="grid gap-5 py-4">
-            {/* Asset Name */}
-            <div className="space-y-2">
-              <Label htmlFor="name" className="flex items-center gap-1.5">
-                <Package className="h-3.5 w-3.5 text-muted-foreground" />
-                Asset Name
-              </Label>
-              <Input
-                id="name"
-                placeholder="e.g., Dell Optiplex 3090"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-              />
+            {/* Asset Name, Date, Value — same row */}
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="flex items-center gap-1.5">
+                  <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                  Asset Name
+                </Label>
+                <Input
+                  id="name"
+                  placeholder="e.g., Dell Optiplex 3090"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                  Date
+                </Label>
+                <Input
+                  value={date}
+                  readOnly
+                  className="bg-muted/50"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="value" className="flex items-center gap-1.5">
+                  <Coins className="h-3.5 w-3.5 text-muted-foreground" />
+                  Value (₱)
+                </Label>
+                <Input
+                  id="value"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={value || ""}
+                  onChange={(e) => setValue(parseFloat(e.target.value) || 0)}
+                  required
+                />
+              </div>
             </div>
 
             {/* Category & Condition — same row */}

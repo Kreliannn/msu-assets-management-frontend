@@ -1,6 +1,8 @@
 export interface assetsInterfaceInput {
     name: string,
     qr : string,
+    date: string,
+    value : number,
     category : string,
     location: string | null,
     condition : string,

@@ -189,7 +189,7 @@ export default function Page() {
                           <span className="truncate max-w-[180px]">{req.college}</span>
                         </span>
                       ) : (
-                        <span className="text-muted-foreground italic text-sm">None</span>
+                        <span className="text-muted-foreground italic text-sm">Main Office</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -199,7 +199,7 @@ export default function Page() {
                           <span className="truncate max-w-[140px]">{req.custodian}</span>
                         </span>
                       ) : (
-                        <span className="text-muted-foreground italic text-sm">None</span>
+                        <span className="text-muted-foreground italic text-sm">Main Office</span>
                       )}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">{req.date}</TableCell>

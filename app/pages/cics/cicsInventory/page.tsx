@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
+import { DisposalModal } from "../../office/inventory/components/disposalModal"
 import axiosInstance from "@/app/utils/axios"
 import { assetsInterface } from "@/app/types/asset.type"
 import {
@@ -32,6 +33,8 @@ import {
   AlertTriangle,
   XCircle,
   Circle,
+  Calendar,
+  Coins,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import {
@@ -82,7 +85,11 @@ export default function Page() {
   const [assets, setAssets] = useState<assetsInterface[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  
+
+  // Disposal modal state
+  const [disposalAsset, setDisposalAsset] = useState<assetsInterface | null>(null)
+  const [disposalDialogOpen, setDisposalDialogOpen] = useState(false)
+
   // Filter state
   const [searchName, setSearchName] = useState("")
   const [filterCategory, setFilterCategory] = useState("all")
@@ -351,8 +358,20 @@ export default function Page() {
                 </TableHead>
                 <TableHead>
                   <div className="flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                    Date
+                  </div>
+                </TableHead>
+                <TableHead>
+                  <div className="flex items-center gap-1.5">
                     <Tag className="h-3.5 w-3.5 text-muted-foreground" />
                     Category
+                  </div>
+                </TableHead>
+                <TableHead>
+                  <div className="flex items-center gap-1.5">
+                    <Coins className="h-3.5 w-3.5 text-muted-foreground" />
+                    Value
                   </div>
                 </TableHead>
                 <TableHead>
@@ -382,7 +401,9 @@ export default function Page() {
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
                     <TableCell><Skeleton className="h-5 w-36" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-32" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-16 rounded-full" /></TableCell>
@@ -392,7 +413,7 @@ export default function Page() {
                 ))
               ) : filteredAssets.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="h-32 text-center text-muted-foreground">
+                  <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
                     <div className="flex flex-col items-center gap-2">
                       <Filter className="h-8 w-8 text-muted-foreground/40" />
                       <span>No assets match your filters</span>
@@ -413,7 +434,11 @@ export default function Page() {
                 filteredAssets.map((asset) => (
                   <TableRow key={asset._id}>
                     <TableCell className="font-medium">{asset.name}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{asset.date}</TableCell>
                     <TableCell className="capitalize">{asset.category}</TableCell>
+                    <TableCell className="text-sm font-medium tabular-nums">
+                      ₱{asset.value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </TableCell>
                     <TableCell>
                       {asset.location ? (
                         <span className="inline-flex items-center gap-1 text-sm">
@@ -442,11 +467,18 @@ export default function Page() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                       
-                       
-
-
-                       
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-red-500"
+                          onClick={() => {
+                            setDisposalAsset(asset)
+                            setDisposalDialogOpen(true)
+                          }}
+                          title="Record Disposal"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>
@@ -457,7 +489,12 @@ export default function Page() {
         </div>
       </div>
 
-   
+      {/* Disposal Dialog */}
+      <DisposalModal
+        open={disposalDialogOpen}
+        onOpenChange={setDisposalDialogOpen}
+        asset={disposalAsset}
+      />
     </div>
   )
 }
