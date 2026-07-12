@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react"
 import axiosInstance from "@/app/utils/axios"
 import { transferRequestInterface } from "@/app/types/transferRequest.type"
-import { confirmAlert, successAlert, errorAlert } from "@/app/utils/alert"
+import { confirmAlert, successAlert, errorAlert } from "@/app/utils/alert";
 import {
   Table,
   TableBody,
@@ -16,23 +16,23 @@ import {
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
-  Loader2,
-  CheckCircle,
-  Clock,
   Package,
   User,
   Building2,
   RefreshCw,
   AlertCircle,
+  Clock,
+  CheckCircle2,
+  XCircle,
   Send,
-  Ban,
+  Loader2,
 } from "lucide-react"
 
 export default function Page() {
   const [requests, setRequests] = useState<transferRequestInterface[]>([])
   const [loading, setLoading] = useState(true)
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [error, setError] = useState("")
-  const [actionId, setActionId] = useState<string | null>(null)
 
   const fetchRequests = async () => {
     setLoading(true)
@@ -53,34 +53,42 @@ export default function Page() {
 
   const pendingRequests = requests.filter((r) => r.status === "pending")
 
-  const handleApprove = (id: string) => {
-    confirmAlert("This will approve the transfer and update the asset's location and custodian.", "Approve", async () => {
-      setActionId(id)
-      try {
-        const response = await axiosInstance.put(`/system/transfer-request/approve/${id}`)
-        setRequests(response.data as transferRequestInterface[])
-        successAlert("Transfer approved successfully")
-      } catch {
-        errorAlert("Failed to approve transfer")
-      } finally {
-        setActionId(null)
+  const handleApprove = async (id: string) => {
+    confirmAlert(
+      "This will approve the transfer request and update the asset's location and custodian.",
+      "Approve",
+      async () => {
+        setActionLoading(id)
+        try {
+          const response = await axiosInstance.put(`/system/transfer-request/approve/${id}`)
+          setRequests(response.data as transferRequestInterface[])
+          successAlert("Transfer request approved successfully")
+        } catch {
+          errorAlert("Failed to approve transfer request")
+        } finally {
+          setActionLoading(null)
+        }
       }
-    })
+    )
   }
 
-  const handleReject = (id: string) => {
-    confirmAlert("This will reject the transfer request.", "Reject", async () => {
-      setActionId(id)
-      try {
-        const response = await axiosInstance.put(`/system/transfer-request/reject/${id}`)
-        setRequests(response.data as transferRequestInterface[])
-        successAlert("Transfer rejected")
-      } catch {
-        errorAlert("Failed to reject transfer")
-      } finally {
-        setActionId(null)
+  const handleReject = async (id: string) => {
+    confirmAlert(
+      "This will reject the transfer request.",
+      "Reject",
+      async () => {
+        setActionLoading(id)
+        try {
+          const response = await axiosInstance.put(`/system/transfer-request/reject/${id}`)
+          setRequests(response.data as transferRequestInterface[])
+          successAlert("Transfer request rejected")
+        } catch {
+          errorAlert("Failed to reject transfer request")
+        } finally {
+          setActionLoading(null)
+        }
       }
-    })
+    )
   }
 
   return (
@@ -90,10 +98,10 @@ export default function Page() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Send className="h-6 w-6 text-primary" />
-            Pending Transfer Requests
+            Transfer Requests
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Review and approve/reject asset transfer requests.
+            Review and manage pending asset transfer requests.
           </p>
         </div>
         <Button variant="outline" size="icon" onClick={fetchRequests} disabled={loading}>
@@ -138,7 +146,7 @@ export default function Page() {
                 <TableHead>
                   <div className="flex items-center gap-1.5">
                     <User className="h-3.5 w-3.5 text-muted-foreground" />
-                    Requested Custodian
+                    Custodian
                   </div>
                 </TableHead>
                 <TableHead>
@@ -158,15 +166,15 @@ export default function Page() {
                     <TableCell><Skeleton className="h-5 w-40" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-28" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                    <TableCell className="text-right"><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-28 ml-auto" /></TableCell>
                   </TableRow>
                 ))
               ) : pendingRequests.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
                     <div className="flex flex-col items-center gap-2">
-                      <CheckCircle className="h-8 w-8 text-muted-foreground/40" />
-                      <span>All caught up! No pending requests.</span>
+                      <Send className="h-8 w-8 text-muted-foreground/40" />
+                      <span>No pending transfer requests.</span>
                     </div>
                   </TableCell>
                 </TableRow>
@@ -200,28 +208,28 @@ export default function Page() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-8 gap-1.5 text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+                          className="gap-1.5 text-emerald-600 border-emerald-600/30 hover:bg-emerald-500/10 hover:text-emerald-500"
                           onClick={() => handleApprove(req._id)}
-                          disabled={actionId === req._id}
+                          disabled={actionLoading === req._id}
                         >
-                          {actionId === req._id ? (
+                          {actionLoading === req._id ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
                           ) : (
-                            <CheckCircle className="h-3.5 w-3.5" />
+                            <CheckCircle2 className="h-3.5 w-3.5" />
                           )}
                           Approve
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-8 gap-1.5 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700"
+                          className="gap-1.5 text-red-600 border-red-600/30 hover:bg-red-500/10 hover:text-red-500"
                           onClick={() => handleReject(req._id)}
-                          disabled={actionId === req._id}
+                          disabled={actionLoading === req._id}
                         >
-                          {actionId === req._id ? (
+                          {actionLoading === req._id ? (
                             <Loader2 className="h-3.5 w-3.5 animate-spin" />
                           ) : (
-                            <Ban className="h-3.5 w-3.5" />
+                            <XCircle className="h-3.5 w-3.5" />
                           )}
                           Reject
                         </Button>
