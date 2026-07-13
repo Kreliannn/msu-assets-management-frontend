@@ -25,6 +25,8 @@ import {
   AlertTriangle,
   XCircle,
   AlertCircle,
+  Calendar,
+  DollarSign,
 } from "lucide-react"
 
 interface QrScannerProps {
@@ -36,6 +38,8 @@ interface QrScannerProps {
 const STATUS_VARIANTS: Record<string, { label: string; color: string; bg: string }> = {
   available: { label: "Available", color: "text-emerald-600", bg: "bg-emerald-500/10" },
   "in use": { label: "In Use", color: "text-amber-600", bg: "bg-amber-500/10" },
+  "damaged": { label: "Damaged", color: "text-red-600", bg: "bg-red-500/10" },
+  "borrowed": { label: "Borrowed", color: "text-purple-600", bg: "bg-purple-500/10" },
 }
 
 const CONDITION_VARIANTS: Record<string, { label: string; color: string; bg: string }> = {
@@ -225,6 +229,25 @@ export function QrScanner({ open, onOpenChange, assets }: QrScannerProps) {
                   ) : (
                     <span className="italic text-muted-foreground">Unassigned</span>
                   )}
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <span>
+                    {new Date(scannedAsset.date).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <DollarSign className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                  <span>
+                    {new Intl.NumberFormat("en-US", {
+                      style: "currency",
+                      currency: "PHP",
+                    }).format(scannedAsset.value)}
+                  </span>
                 </div>
                 <div>
                   {(CONDITION_VARIANTS[scannedAsset.condition.toLowerCase()] && (

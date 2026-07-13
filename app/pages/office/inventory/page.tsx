@@ -40,6 +40,8 @@ import {
   Building2,
   Calendar,
   Coins,
+  FileDown,
+  HandHelping,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import {
@@ -50,7 +52,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-import {  HandHelping } from "lucide-react";
+import { downloadBlankExcelForm } from "@/app/utils/excel"
 
 const STATUS_VARIANTS: Record<
   string,
@@ -107,6 +109,8 @@ const CONDITION_VARIANTS: Record<string, { label: string; icon: typeof Circle; c
     bg: "bg-red-500/10",
   },
 }
+
+
 
 export default function Page() {
   const [assets, setAssets] = useState<assetsInterface[]>([])
@@ -270,14 +274,14 @@ export default function Page() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Package className="h-6 w-6 text-primary" />
-            Asset Inventory
+            Property Inventory
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Track and manage all property assets across departments.
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={fetchAssets} disabled={loading}>
+          <Button variant="outline" size="icon" onClick={fetchAssets} disabled={loading} title="Refresh">
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
           <Button
@@ -287,6 +291,14 @@ export default function Page() {
             title="Scan QR Code"
           >
             <Scan className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => { downloadBlankExcelForm().catch(() => {}) }}
+            title="Download Blank Form (Excel)"
+          >
+            <FileDown className="h-4 w-4" />
           </Button>
           <AddAssetModal onSuccess={handleAddSuccess} />
         </div>

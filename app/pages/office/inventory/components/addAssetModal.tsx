@@ -33,6 +33,7 @@ import {
   Wrench,
   Calendar,
   Coins,
+  Hash,
 } from "lucide-react"
 
 const CATEGORIES = [
@@ -69,11 +70,12 @@ export function AddAssetModal({ onSuccess }: AddAssetModalProps) {
 
   // Form fields
   const [name, setName] = useState("")
-  const [date] = useState(new Date().toISOString().split("T")[0])
+  const [date, setDate] = useState(new Date().toISOString().split("T")[0])
   const [value, setValue] = useState(0)
   const [qr, setQr] = useState(generateQrCode())
   const [category, setCategory] = useState("")
   const [condition, setCondition] = useState("")
+  const [qty, setQty] = useState(1)
   const [location, setLocation] = useState<string | null>(null)
   const [custodian, setCustodian] = useState<string | null>(null)
   const [status, setStatus] = useState("available")
@@ -107,10 +109,12 @@ export function AddAssetModal({ onSuccess }: AddAssetModalProps) {
 
   const resetForm = () => {
     setName("")
+    setDate(new Date().toISOString().split("T")[0])
     setValue(0)
     setQr(generateQrCode())
     setCategory("")
     setCondition("")
+    setQty(1)
     setLocation(null)
     setCustodian(null)
     setStatus("available")
@@ -136,7 +140,8 @@ export function AddAssetModal({ onSuccess }: AddAssetModalProps) {
 
     setLoading(true)
     try {
-      const response = await axiosInstance.post("/asset", {
+
+      const data = {
         name,
         qr,
         date,
@@ -146,7 +151,9 @@ export function AddAssetModal({ onSuccess }: AddAssetModalProps) {
         condition,
         status,
         custodian,
-      } as assetsInterfaceInput)
+      } as assetsInterfaceInput
+
+      const response = await axiosInstance.post("/asset", { assets: data, qty })
       const assets = response.data as assetsInterface[]
       onSuccess(assets)
       resetForm()
@@ -177,7 +184,7 @@ export function AddAssetModal({ onSuccess }: AddAssetModalProps) {
       <DialogTrigger asChild>
         <Button className="gap-2">
           <Plus className="h-4 w-4" />
-          Add Asset
+          Add Property
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
@@ -185,7 +192,7 @@ export function AddAssetModal({ onSuccess }: AddAssetModalProps) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-lg">
               <Package className="h-5 w-5 text-primary" />
-              Add New Asset
+              Add New Property
             </DialogTitle>
             <DialogDescription>
               Register a new property asset with its details.
@@ -198,7 +205,7 @@ export function AddAssetModal({ onSuccess }: AddAssetModalProps) {
               <div className="space-y-2">
                 <Label htmlFor="name" className="flex items-center gap-1.5">
                   <Package className="h-3.5 w-3.5 text-muted-foreground" />
-                  Asset Name
+                  Property Name
                 </Label>
                 <Input
                   id="name"
@@ -209,14 +216,15 @@ export function AddAssetModal({ onSuccess }: AddAssetModalProps) {
                 />
               </div>
               <div className="space-y-2">
-                <Label className="flex items-center gap-1.5">
+                <Label htmlFor="date" className="flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                   Date
                 </Label>
                 <Input
+                  id="date"
+                  type="date"
                   value={date}
-                  readOnly
-                  className="bg-muted/50"
+                  onChange={(e) => setDate(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -237,8 +245,8 @@ export function AddAssetModal({ onSuccess }: AddAssetModalProps) {
               </div>
             </div>
 
-            {/* Category & Condition — same row */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* Category, Condition & Quantity — same row */}
+            <div className="grid grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="category" className="flex items-center gap-1.5">
                   <Tag className="h-3.5 w-3.5 text-muted-foreground" />
@@ -274,6 +282,20 @@ export function AddAssetModal({ onSuccess }: AddAssetModalProps) {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="qty" className="flex items-center gap-1.5">
+                  <Hash className="h-3.5 w-3.5 text-muted-foreground" />
+                  Quantity
+                </Label>
+                <Input
+                  id="qty"
+                  type="number"
+                  min="1"
+                  step="1"
+                  value={qty}
+                  onChange={(e) => setQty(Math.max(1, parseInt(e.target.value) || 1))}
+                />
               </div>
             </div>
 

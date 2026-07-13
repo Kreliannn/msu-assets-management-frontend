@@ -79,7 +79,7 @@ export default function Page() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Building2 className="h-6 w-6 text-primary" />
-            College Management
+            Department Management
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Manage college departments, deans, and custodians.
@@ -192,7 +192,7 @@ export default function Page() {
                       <GraduationCap className="h-3.5 w-3.5 text-amber-600" />
                     </div>
                     <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Dean
+                      Dean / Director
                     </span>
                   </div>
                   <div className="space-y-1.5 pl-1">

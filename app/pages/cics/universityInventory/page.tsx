@@ -256,7 +256,7 @@ export default function Page() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
             <Package className="h-6 w-6 text-primary" />
-            Asset Inventory
+            Property Inventory
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             Track and manage all property assets across departments.

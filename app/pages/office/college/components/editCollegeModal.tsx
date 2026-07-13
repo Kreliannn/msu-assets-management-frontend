@@ -183,7 +183,7 @@ export function EditCollegeModal({ college, onSuccess }: EditCollegeModalProps) 
               </div>
               <div className="relative flex justify-center text-xs uppercase">
                 <span className="bg-popover px-2 text-muted-foreground font-medium flex items-center gap-1">
-                  <GraduationCap className="h-3 w-3" /> Dean Information
+                  <GraduationCap className="h-3 w-3" />  Dean/Director Information
                 </span>
               </div>
             </div>

@@ -21,8 +21,8 @@ import { useQueryClient } from "@tanstack/react-query"
 
 const navigationItems = [
   { title: "Dashboard", url: "/pages/cics/home", icon: Home },
-  { title: "school assets", url: "/pages/cics/universityInventory", icon: UserPlus2 },
-  { title: "cics assets", url: "/pages/cics/cicsInventory", icon: Building },
+  { title: "school property", url: "/pages/cics/universityInventory", icon: UserPlus2 },
+  { title: "cics property", url: "/pages/cics/cicsInventory", icon: Building },
  
 ]
 
