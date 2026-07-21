@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react"
 import { DisposalModal } from "./components/disposalModal"
+import { AssignToModal } from "./components/assignToModal"
 import axiosInstance from "@/app/utils/axios"
 import { assetsInterface } from "@/app/types/asset.type"
 import {
@@ -111,6 +112,10 @@ export default function Page() {
   // Disposal modal state
   const [disposalAsset, setDisposalAsset] = useState<assetsInterface | null>(null)
   const [disposalDialogOpen, setDisposalDialogOpen] = useState(false)
+
+  // AssignTo modal state
+  const [assignToAsset, setAssignToAsset] = useState<assetsInterface | null>(null)
+  const [assignToDialogOpen, setAssignToDialogOpen] = useState(false)
 
   // Filter state
   const [searchName, setSearchName] = useState("")
@@ -412,9 +417,10 @@ export default function Page() {
                 <TableHead>
                   <div className="flex items-center gap-1.5">
                     <User className="h-3.5 w-3.5 text-muted-foreground" />
-                    Custodian
+                    Assign
                   </div>
                 </TableHead>
+                
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -478,10 +484,10 @@ export default function Page() {
                       <StatusBadge status={asset.status} />
                     </TableCell>
                     <TableCell>
-                      {asset.custodian ? (
+                      {asset.assignTo ? (
                         <span className="inline-flex items-center gap-1 text-sm">
                           <User className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                          <span className="truncate max-w-[120px]">{asset.custodian}</span>
+                          <span className="truncate max-w-[120px]">{asset.assignTo}</span>
                         </span>
                       ) : (
                         <span className="text-muted-foreground italic text-sm">—</span>
@@ -489,6 +495,18 @@ export default function Page() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-amber-600"
+                          onClick={() => {
+                            setAssignToAsset(asset)
+                            setAssignToDialogOpen(true)
+                          }}
+                          title="Assign Person"
+                        >
+                          <User className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -510,6 +528,14 @@ export default function Page() {
           </Table>
         </div>
       </div>
+
+      {/* AssignTo Dialog */}
+      <AssignToModal
+        open={assignToDialogOpen}
+        onOpenChange={setAssignToDialogOpen}
+        asset={assignToAsset}
+        onSuccess={fetchAssets}
+      />
 
       {/* Disposal Dialog */}
       <DisposalModal

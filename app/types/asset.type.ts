@@ -8,6 +8,7 @@ export interface assetsInterfaceInput {
     condition : string,
     status : string,
     custodian :  string | null,
+    assignTo : string | null,
 }
 
 export interface assetsInterface extends assetsInterfaceInput {
