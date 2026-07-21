@@ -46,7 +46,10 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 
-import { HandHelping } from "lucide-react";
+import { HandHelping, ArrowRightFromLine } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox"
+import { BulkQrModal } from "@/components/BulkQrModal"
+
 
 const STATUS_VARIANTS: Record<
   string,
@@ -81,23 +84,28 @@ const STATUS_VARIANTS: Record<
     color: "text-blue-600",
     bg: "bg-blue-500/10",
   },
+  underrepair: {
+    label: "Under Repair",
+    icon: Wrench,
+    color: "text-orange-600",
+    bg: "bg-orange-500/10",
+  },
 };
-
 const CONDITION_VARIANTS: Record<string, { label: string; icon: typeof Circle; color: string; bg: string }> = {
   good: {
-    label: "Good",
+    label: "good condition",
     icon: BadgeCheck,
     color: "text-emerald-600",
     bg: "bg-emerald-500/10",
   },
-  poor: {
-    label: "Poor",
+  serviceable: {
+    label: "serviceable",
     icon: AlertTriangle,
     color: "text-orange-600",
     bg: "bg-orange-500/10",
   },
-  damaged: {
-    label: "Damaged",
+  unserviceable: {
+    label: "Unserviceable",
     icon: XCircle,
     color: "text-red-600",
     bg: "bg-red-500/10",
@@ -108,6 +116,11 @@ export default function Page() {
   const [assets, setAssets] = useState<assetsInterface[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+
+  // Bulk transfer state
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [bulkTransferOpen, setBulkTransferOpen] = useState(false)
+  const [bulkQrOpen, setBulkQrOpen] = useState(false)
 
   // Disposal modal state
   const [disposalAsset, setDisposalAsset] = useState<assetsInterface | null>(null)
@@ -206,6 +219,20 @@ export default function Page() {
     filterCondition !== "all" ||
     filterLocation !== "all"
 
+  const toggleSelectAsset = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+    )
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedIds.length === filteredAssets.length) {
+      setSelectedIds([])
+    } else {
+      setSelectedIds(filteredAssets.map((a) => a._id))
+    }
+  }
+
   const clearFilters = () => {
     setSearchName("")
     setFilterCategory("all")
@@ -218,7 +245,15 @@ export default function Page() {
     setAssets(newAssets)
   }
 
-  
+  const handleToggleRepair = async (id: string) => {
+    try {
+      const response = await axiosInstance.put(`/asset/${id}/repair-toggle`)
+      const updated = response.data as assetsInterface
+      setAssets((prev) => prev.map((a) => (a._id === id ? updated : a)))
+    } catch {
+      setError("Failed to toggle repair status")
+    }
+  }
 
   const StatusBadge = ({ status }: { status: string }) => {
     const variant = STATUS_VARIANTS[status.toLowerCase()]
@@ -261,8 +296,18 @@ export default function Page() {
           <Button variant="outline" size="icon" onClick={fetchAssets} disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setBulkQrOpen(true)}
+            disabled={selectedIds.length === 0}
+            className={`gap-1.5 ${selectedIds.length > 0 ? "border-primary/50 text-primary" : ""}`}
+            title="Download QR Codes"
+          >
+            <QrCode className="h-4 w-4" />
+            QR{selectedIds.length > 0 ? ` (${selectedIds.length})` : ""}
+          </Button>
         
-          
         </div>
       </div>
 
@@ -377,6 +422,16 @@ export default function Page() {
             </TableCaption>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={
+                      filteredAssets.length > 0 &&
+                      selectedIds.length === filteredAssets.length
+                    }
+                    onCheckedChange={toggleSelectAll}
+                    aria-label="Select all"
+                  />
+                </TableHead>
                 <TableHead className="min-w-[180px]">
                   <div className="flex items-center gap-1.5">
                     <Package className="h-3.5 w-3.5 text-muted-foreground" />
@@ -428,6 +483,7 @@ export default function Page() {
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <TableRow key={i}>
+                    <TableCell><Skeleton className="h-4 w-4" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-36" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-28" /></TableCell>
@@ -441,7 +497,7 @@ export default function Page() {
                 ))
               ) : filteredAssets.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={9} className="h-32 text-center text-muted-foreground">
+                  <TableCell colSpan={10} className="h-32 text-center text-muted-foreground">
                     <div className="flex flex-col items-center gap-2">
                       <Filter className="h-8 w-8 text-muted-foreground/40" />
                       <span>No assets match your filters</span>
@@ -460,7 +516,17 @@ export default function Page() {
                 </TableRow>
               ) : (
                 filteredAssets.map((asset) => (
-                  <TableRow key={asset._id}>
+                  <TableRow
+                    key={asset._id}
+                    className={selectedIds.includes(asset._id) ? "bg-primary/5" : ""}
+                  >
+                    <TableCell className="w-10">
+                      <Checkbox
+                        checked={selectedIds.includes(asset._id)}
+                        onCheckedChange={() => toggleSelectAsset(asset._id)}
+                        aria-label={`Select ${asset.name}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">{asset.name}</TableCell>
                     <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{asset.date}</TableCell>
                     <TableCell className="capitalize">{asset.category}</TableCell>
@@ -498,6 +564,23 @@ export default function Page() {
                         <Button
                           variant="ghost"
                           size="icon"
+                          className={`h-8 w-8 ${
+                            asset.status.toLowerCase() === "underrepair"
+                              ? "text-orange-500 bg-orange-500/10 hover:bg-orange-500/20"
+                              : "text-muted-foreground hover:text-orange-500"
+                          }`}
+                          onClick={() => handleToggleRepair(asset._id)}
+                          title={
+                            asset.status.toLowerCase() === "underrepair"
+                              ? "Mark as repaired"
+                              : "Mark as under repair"
+                          }
+                        >
+                          <Wrench className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           className="h-8 w-8 text-muted-foreground hover:text-amber-600"
                           onClick={() => {
                             setAssignToAsset(asset)
@@ -528,6 +611,16 @@ export default function Page() {
           </Table>
         </div>
       </div>
+
+      
+
+      {/* Bulk QR Download Dialog */}
+      <BulkQrModal
+        open={bulkQrOpen}
+        onOpenChange={setBulkQrOpen}
+        assets={assets}
+        selectedIds={selectedIds}
+      />
 
       {/* AssignTo Dialog */}
       <AssignToModal

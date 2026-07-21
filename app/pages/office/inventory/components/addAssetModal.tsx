@@ -37,16 +37,12 @@ import {
 } from "lucide-react"
 
 const CATEGORIES = [
-  "furniture",
-  "it equipment",
-  "audio-visual equipment",
-  "library assets",
-  "office equipment",
-  "laboratory equipment",
-  "sport equipment",
+ "property",
+ "plant",
+ "equipment"
 ] as const
 
-const CONDITIONS = ["good", "poor", "damaged"] as const
+const CONDITIONS = ["good", "serviceable", "unserviceable"] as const
 
 function generateQrCode(): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
@@ -275,6 +271,7 @@ export function AddAssetModal({ onSuccess }: AddAssetModalProps) {
                     <SelectValue placeholder="Select condition" />
                   </SelectTrigger>
                   <SelectContent>
+                     
                     {CONDITIONS.map((cond) => (
                       <SelectItem key={cond} value={cond} className="capitalize">
                         {cond}

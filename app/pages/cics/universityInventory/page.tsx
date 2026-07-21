@@ -84,19 +84,19 @@ const STATUS_VARIANTS: Record<
 
 const CONDITION_VARIANTS: Record<string, { label: string; icon: typeof Circle; color: string; bg: string }> = {
   good: {
-    label: "Good",
+    label: "good condition",
     icon: BadgeCheck,
     color: "text-emerald-600",
     bg: "bg-emerald-500/10",
   },
-  poor: {
-    label: "Poor",
+  serviceable: {
+    label: "serviceable",
     icon: AlertTriangle,
     color: "text-orange-600",
     bg: "bg-orange-500/10",
   },
-  damaged: {
-    label: "Damaged",
+  unserviceable: {
+    label: "Unserviceable",
     icon: XCircle,
     color: "text-red-600",
     bg: "bg-red-500/10",
