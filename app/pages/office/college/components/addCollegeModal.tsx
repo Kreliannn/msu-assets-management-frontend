@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
   Dialog,
   DialogContent,
@@ -13,8 +13,16 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import axiosInstance from "@/app/utils/axios"
 import { collegeInterface, collegeInterfaceInput } from "@/app/types/college.type"
+import { accountInterface } from "@/app/types/account.type"
 import { Loader2, Plus, Building2, User, GraduationCap, Mail, Hash } from "lucide-react"
 
 interface AddCollegeModalProps {
@@ -24,6 +32,7 @@ interface AddCollegeModalProps {
 export function AddCollegeModal({ onSuccess }: AddCollegeModalProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [users, setUsers] = useState<accountInterface[]>([])
   const [department, setDepartment] = useState("")
   const [custodianName, setCustodianName] = useState("")
   const [custodianIdNumber, setCustodianIdNumber] = useState("")
@@ -31,7 +40,21 @@ export function AddCollegeModal({ onSuccess }: AddCollegeModalProps) {
   const [deanName, setDeanName] = useState("")
   const [deanIdNumber, setDeanIdNumber] = useState("")
   const [deanEmail, setDeanEmail] = useState("")
+  const [selectedCustodianId, setSelectedCustodianId] = useState("")
+  const [selectedDeanId, setSelectedDeanId] = useState("")
   const [error, setError] = useState("")
+
+  const custodians = users.filter((u) => u.role === "custodian")
+  const deans = users.filter((u) => u.role === "dean" || u.role === "director")
+
+  useEffect(() => {
+    if (open) {
+      setUsers([])
+      setSelectedCustodianId("")
+      setSelectedDeanId("")
+      axiosInstance.get("/account").then((res) => setUsers(res.data as accountInterface[])).catch(() => {})
+    }
+  }, [open])
 
   const resetForm = () => {
     setDepartment("")
@@ -41,7 +64,29 @@ export function AddCollegeModal({ onSuccess }: AddCollegeModalProps) {
     setDeanName("")
     setDeanIdNumber("")
     setDeanEmail("")
+    setSelectedCustodianId("")
+    setSelectedDeanId("")
     setError("")
+  }
+
+  const handleCustodianSelect = (id: string) => {
+    setSelectedCustodianId(id)
+    const user = users.find((u) => u._id === id)
+    if (user) {
+      setCustodianName(user.name)
+      setCustodianIdNumber(user.idNumber)
+      setCustodianEmail(user.email)
+    }
+  }
+
+  const handleDeanSelect = (id: string) => {
+    setSelectedDeanId(id)
+    const user = users.find((u) => u._id === id)
+    if (user) {
+      setDeanName(user.name)
+      setDeanIdNumber(user.idNumber)
+      setDeanEmail(user.email)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -132,6 +177,28 @@ export function AddCollegeModal({ onSuccess }: AddCollegeModalProps) {
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <User className="h-3.5 w-3.5 text-muted-foreground" />
+                Select Custodian
+              </Label>
+              <Select value={selectedCustodianId || undefined} onValueChange={handleCustodianSelect}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Choose a custodian" />
+                </SelectTrigger>
+                <SelectContent>
+                  {custodians.length === 0 && (
+                    <SelectItem value="_none" disabled>No custodians available</SelectItem>
+                  )}
+                  {custodians.map((u) => (
+                    <SelectItem key={u._id} value={u._id}>
+                      {u.name} — {u.idNumber}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2 col-span-2 sm:col-span-1">
                 <Label htmlFor="custodianName" className="flex items-center gap-1.5">
@@ -182,6 +249,28 @@ export function AddCollegeModal({ onSuccess }: AddCollegeModalProps) {
                   <GraduationCap className="h-3 w-3" /> Dean/Director Information
                 </span>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label className="flex items-center gap-1.5">
+                <GraduationCap className="h-3.5 w-3.5 text-muted-foreground" />
+                Select Dean / Director
+              </Label>
+              <Select value={selectedDeanId || undefined} onValueChange={handleDeanSelect}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Choose a dean or director" />
+                </SelectTrigger>
+                <SelectContent>
+                  {deans.length === 0 && (
+                    <SelectItem value="_none" disabled>No deans or directors available</SelectItem>
+                  )}
+                  {deans.map((u) => (
+                    <SelectItem key={u._id} value={u._id}>
+                      {u.name} ({u.role}) — {u.idNumber}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="grid grid-cols-2 gap-4">

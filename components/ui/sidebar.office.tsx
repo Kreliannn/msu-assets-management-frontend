@@ -23,6 +23,11 @@ const navigationItems = [
   { title: "Dashboard", url: "/pages/office/home", icon: Home },
   { title: "Property Inventory", url: "/pages/office/inventory", icon: UserPlus2 },
   { title: "Department", url: "/pages/office/college", icon: UserPlus2 },
+    { title: "users", url: "/pages/office/users", icon: UserPlus2 },
+  { title: "Transfer Request", url: "/pages/office/transferRequest", icon: UserPlus2 },
+  { title: "Transfer History", url: "/pages/office/transferHistory", icon: UserPlus2 },
+  { title: "Disposal Record", url: "/pages/office/disposalRecord", icon: UserPlus2 },
+    { title: "Logs", url: "/pages/office/logs", icon: UserPlus2 },
 ]
 
 const accountItems = [

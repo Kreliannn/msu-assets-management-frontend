@@ -31,10 +31,7 @@ import {
   Building2,
   ArrowRight,
   BadgeCheck,
-  Pencil,
-  Building,
 } from "lucide-react"
-import { Switch } from "@/components/ui/switch"
 import { successAlert } from "@/app/utils/alert"
 
 
@@ -42,9 +39,10 @@ interface AssignAssetModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   asset: assetsInterface | null
+   onSuccess?: () => void
 }
 
-export function AssignAssetModal({ open, onOpenChange, asset }: AssignAssetModalProps) {
+export function AssignAssetModal({ open, onOpenChange, asset , onSuccess}: AssignAssetModalProps) {
   const [colleges, setColleges] = useState<collegeInterface[]>([])
   const [fetchingColleges, setFetchingColleges] = useState(false)
   const [selectedLocation, setSelectedLocation] = useState<string | null>(
@@ -53,7 +51,6 @@ export function AssignAssetModal({ open, onOpenChange, asset }: AssignAssetModal
   const [selectedCustodian, setSelectedCustodian] = useState<string | null>(
     asset?.custodian || null
   )
-  const [manualMode, setManualMode] = useState(false)
   const [loadError, setLoadError] = useState("")
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState("")
@@ -92,13 +89,14 @@ export function AssignAssetModal({ open, onOpenChange, asset }: AssignAssetModal
     setSaveSuccess(false)
 
     try {
-      await axiosInstance.post("/system/transfer-request", {
+      await axiosInstance.put("/asset/transfer", {
         assetId: asset._id,
         assetname : asset.name, 
         college: selectedLocation,
         custodian: selectedCustodian,
       })
       onOpenChange(false)
+      onSuccess?.()
       successAlert("Transfer Submited")
     } catch {
       setSaveError("Failed to submit transfer request. Please try again.")
@@ -107,11 +105,11 @@ export function AssignAssetModal({ open, onOpenChange, asset }: AssignAssetModal
     }
   }
 
+  // Use effect to react to dialog opening — more reliable than onOpenChange for controlled dialogs
   useEffect(() => {
     if (open && asset) {
       setSelectedLocation(asset.location || null)
       setSelectedCustodian(asset.custodian || null)
-      setManualMode(false)
       loadColleges()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -181,89 +179,63 @@ export function AssignAssetModal({ open, onOpenChange, asset }: AssignAssetModal
             <div className="flex h-7 w-7 items-center justify-center rounded-full border bg-background">
               <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
             </div>
-          </div>          {/* New Assignment Form */}
+          </div>
+
+          {/* New Assignment Form */}
           <div className="rounded-lg border bg-card p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                New Assignment
-              </h4>
-              <div className="flex items-center gap-2">
-                <Building className="h-3.5 w-3.5 text-muted-foreground" />
-                <label
-                  htmlFor="manual-mode-toggle"
-                  className="text-xs text-muted-foreground cursor-pointer select-none"
-                >
-                  Building
-                </label>
-                <Switch
-                  id="manual-mode-toggle"
-                  checked={manualMode}
-                  onCheckedChange={setManualMode}
-                  size="sm"
-                />
-              </div>
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              New Assignment
+             
+            </h4>
+
+            {/* Location Select */}
+            <div className="space-y-2">
+              <Label htmlFor="assign-location" className="flex items-center gap-1.5">
+                <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                Location (College Department)
+              </Label>
+              <Select
+                value={selectedLocation || "none"}
+                onValueChange={handleLocationChange}
+              >
+                <SelectTrigger id="assign-location" className="w-full">
+                  <SelectValue placeholder="Select a location" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None (Unassigned)</SelectItem>
+
+                  <SelectItem key={"MSU Main Campus"} value={"MSU Main Campus"}>
+                     MSU Main Campus
+                  </SelectItem>
+
+                  {fetchingColleges ? (
+                    <SelectItem value="loading" disabled>
+                      Loading colleges...
+                    </SelectItem>
+                  ) : (
+                    colleges.map((college) => (
+                      <SelectItem key={college._id} value={college.department}>
+                        {college.department}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+
+              {/* Error message when API fails */}
+              {loadError && (
+                <div className="flex items-center gap-1.5 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
+                  <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                  {loadError}
+                </div>
+              )}
+
+              <p className="text-xs text-muted-foreground">
+                Select a college department or choose &quot;None&quot; to leave unassigned.
+              </p>
             </div>
 
-            {/* Location - Select or Input based on mode */}
-            {manualMode ? (
-              <div className="space-y-2">
-                <Label htmlFor="assign-manual-location" className="flex items-center gap-1.5">
-                  <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
-                  Building Name
-                </Label>
-                <Input
-                  id="assign-manual-location"
-                  value={selectedLocation || ""}
-                  onChange={(e) => setSelectedLocation(e.target.value || null)}
-                  placeholder="e.g., Engineering Building, Room 202"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Enter the building or room name for this asset.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <Label htmlFor="assign-location" className="flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                  Location (College Department)
-                </Label>
-                <Select
-                  value={selectedLocation || "none"}
-                  onValueChange={handleLocationChange}
-                >
-                  <SelectTrigger id="assign-location" className="w-full">
-                    <SelectValue placeholder="Select a location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">None (Unassigned)</SelectItem>
-                    {fetchingColleges ? (
-                      <SelectItem value="loading" disabled>
-                        Loading colleges...
-                      </SelectItem>
-                    ) : (
-                      colleges.map((college) => (
-                        <SelectItem key={college._id} value={college.department}>
-                          {college.department}
-                        </SelectItem>
-                      ))
-                    )}
-                  </SelectContent>
-                </Select>
-
-                {loadError && (
-                  <div className="flex items-center gap-1.5 rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                    <AlertCircle className="h-3.5 w-3.5 shrink-0" />
-                    {loadError}
-                  </div>
-                )}
-
-                <p className="text-xs text-muted-foreground">
-                  Select a college department or choose &quot;None&quot; to leave unassigned.
-                </p>
-              </div>
-            )}
-
-            {/* Custodian - readonly or editable based on mode */}
+            {/* Custodian (auto-filled) */}
             <div className="space-y-2">
               <Label htmlFor="assign-custodian" className="flex items-center gap-1.5">
                 <User className="h-3.5 w-3.5 text-muted-foreground" />
@@ -273,29 +245,19 @@ export function AssignAssetModal({ open, onOpenChange, asset }: AssignAssetModal
                 <Input
                   id="assign-custodian"
                   value={selectedCustodian || ""}
-                  readOnly={!manualMode}
-                  onChange={
-                    manualMode
-                      ? (e) => setSelectedCustodian(e.target.value || null)
-                      : undefined
-                  }
-                  placeholder={
-                    manualMode
-                      ? "Enter custodian name"
-                      : "Auto-filled from selected department"
-                  }
-                  className={!manualMode ? "bg-muted/50" : ""}
+                  onChange={(e) => setSelectedCustodian(e.target.value)}
+                  readOnly={selectedLocation !== "MSU Main Campus"}
+                  placeholder={selectedLocation === "MSU Main Campus" ? "Enter custodian name" : "Auto-filled from selected department"}
+                  className={selectedLocation !== "MSU Main Campus" ? "bg-muted/50" : ""}
                 />
-                {selectedCustodian && !manualMode && (
+                {selectedCustodian && (
                   <div className="absolute right-3 top-1/2 -translate-y-1/2">
                     <div className="h-2 w-2 rounded-full bg-emerald-500" />
                   </div>
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                {manualMode
-                  ? "Manually enter the custodian for this asset."
-                  : "Automatically set to the custodian of the selected college department."}
+                {selectedLocation === "MSU Main Campus" ? "Manually enter the custodian name for the main campus." : "Automatically set to the custodian of the selected college department."}
               </p>
             </div>
           </div>
@@ -349,3 +311,5 @@ export function AssignAssetModal({ open, onOpenChange, asset }: AssignAssetModal
     </Dialog>
   )
 }
+
+

@@ -711,6 +711,7 @@ export default function Page() {
         open={assignDialogOpen}
         onOpenChange={setAssignDialogOpen}
         asset={assignAsset}
+        onSuccess={fetchAssets}
       />
 
       {/* Disposal Dialog */}

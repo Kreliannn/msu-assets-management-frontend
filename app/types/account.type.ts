@@ -1,18 +1,14 @@
 export interface accountInterfaceInput {
     name: string,
-    type: string,
-    contact: string,
-    email: string,
-    subscriptionExpiration : string | null,
+    role: string,
+    username: string,
     password: string,
-    profile  :string,
-    isBan : boolean,
-    pin : string | null,
-    location?: {
-        lat?: number | null
-        long?: number | null
-    } | null
-
+    dateCreated : string,
+    status : string,
+    college: string,
+    profile: string,
+    idNumber:string,
+    email:string,
 }
 
 export interface accountInterface extends accountInterfaceInput {
