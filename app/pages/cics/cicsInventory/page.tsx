@@ -571,6 +571,22 @@ export default function Page() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
+
+                         {asset.status.toLowerCase() === "in use" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-blue-600"
+                            onClick={() => {
+                              setBorrowAsset(asset)
+                              setBorrowDialogOpen(true)
+                            }}
+                            title="Borrow Asset"
+                          >
+                            <HandHelping className="h-4 w-4" />
+                          </Button>
+                        )}
+                        
                         <Button
                           variant="ghost"
                           size="icon"
@@ -600,20 +616,7 @@ export default function Page() {
                         >
                           <User className="h-4 w-4" />
                         </Button>
-                        {asset.status.toLowerCase() === "in use" && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-blue-600"
-                            onClick={() => {
-                              setBorrowAsset(asset)
-                              setBorrowDialogOpen(true)
-                            }}
-                            title="Borrow Asset"
-                          >
-                            <HandHelping className="h-4 w-4" />
-                          </Button>
-                        )}
+                       
                         <Button
                           variant="ghost"
                           size="icon"
