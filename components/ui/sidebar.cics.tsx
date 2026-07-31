@@ -23,7 +23,7 @@ const navigationItems = [
   { title: "Dashboard", url: "/pages/cics/home", icon: Home },
   { title: "school property", url: "/pages/cics/universityInventory", icon: UserPlus2 },
   { title: "cics property", url: "/pages/cics/cicsInventory", icon: Building },
- 
+   { title: "Borrow Asset", url: "/pages/cics/borrow", icon: Building },
 ]
 
 const accountItems = [

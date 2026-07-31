@@ -3,6 +3,8 @@
 import { useEffect, useState, useMemo } from "react"
 import { DisposalModal } from "./components/disposalModal"
 import { AssignToModal } from "./components/assignToModal"
+import { BorrowModal } from "./components/borrowModal"
+import { DisplayQr } from "./components/displayQr"
 import axiosInstance from "@/app/utils/axios"
 import { assetsInterface } from "@/app/types/asset.type"
 import {
@@ -129,6 +131,14 @@ export default function Page() {
   // AssignTo modal state
   const [assignToAsset, setAssignToAsset] = useState<assetsInterface | null>(null)
   const [assignToDialogOpen, setAssignToDialogOpen] = useState(false)
+
+  // Borrow modal state
+  const [borrowAsset, setBorrowAsset] = useState<assetsInterface | null>(null)
+  const [borrowDialogOpen, setBorrowDialogOpen] = useState(false)
+
+  // QR display modal state
+  const [qrAsset, setQrAsset] = useState<assetsInterface | null>(null)
+  const [qrDialogOpen, setQrDialogOpen] = useState(false)
 
   // Filter state
   const [searchName, setSearchName] = useState("")
@@ -590,6 +600,32 @@ export default function Page() {
                         >
                           <User className="h-4 w-4" />
                         </Button>
+                        {asset.status.toLowerCase() === "in use" && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-blue-600"
+                            onClick={() => {
+                              setBorrowAsset(asset)
+                              setBorrowDialogOpen(true)
+                            }}
+                            title="Borrow Asset"
+                          >
+                            <HandHelping className="h-4 w-4" />
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-primary"
+                          onClick={() => {
+                            setQrAsset(asset)
+                            setQrDialogOpen(true)
+                          }}
+                          title="Show QR Code"
+                        >
+                          <QrCode className="h-4 w-4" />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="icon"
@@ -629,6 +665,24 @@ export default function Page() {
         asset={assignToAsset}
         onSuccess={fetchAssets}
       />
+
+      {/* Borrow Dialog */}
+      <BorrowModal
+        open={borrowDialogOpen}
+        onOpenChange={setBorrowDialogOpen}
+        asset={borrowAsset}
+        onSuccess={fetchAssets}
+      />
+
+      {/* QR Code Display Dialog */}
+      {qrAsset && (
+        <DisplayQr
+          open={qrDialogOpen}
+          onOpenChange={setQrDialogOpen}
+          qrValue={qrAsset.qr}
+          assetName={qrAsset.name}
+        />
+      )}
 
       {/* Disposal Dialog */}
       <DisposalModal
