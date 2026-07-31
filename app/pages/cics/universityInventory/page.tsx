@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo } from "react"
 import axiosInstance from "@/app/utils/axios"
 import { assetsInterface } from "@/app/types/asset.type"
+import { transferRequestInterface } from "@/app/types/transferRequest.type"
 import {
   Table,
   TableBody,
@@ -25,8 +26,6 @@ import {
   RefreshCw,
   AlertCircle,
   Trash2,
-  QrCode,
-  Scan,
   User,
   BadgeCheck,
   AlertTriangle,
@@ -34,6 +33,9 @@ import {
   Circle,
   Calendar,
   Coins,
+  HandHelping,
+  Send,
+  Clock,
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import {
@@ -43,9 +45,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-
-
-import { HandHelping } from "lucide-react";
+import { TransferRequestModal } from "./components/transferRequestModal"
 
 const STATUS_VARIANTS: Record<
   string,
@@ -105,11 +105,13 @@ const CONDITION_VARIANTS: Record<string, { label: string; icon: typeof Circle; c
 
 export default function Page() {
   const [assets, setAssets] = useState<assetsInterface[]>([])
+  const [transfers, setTransfers] = useState<transferRequestInterface[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const [deletingId, setDeletingId] = useState<string | null>(null)
 
-
+  // Transfer request modal state
+  const [transferAsset, setTransferAsset] = useState<assetsInterface | null>(null)
+  const [transferDialogOpen, setTransferDialogOpen] = useState(false)
 
   // Filter state
   const [searchName, setSearchName] = useState("")
@@ -118,14 +120,18 @@ export default function Page() {
   const [filterCondition, setFilterCondition] = useState("all")
   const [filterLocation, setFilterLocation] = useState("all")
 
-  const fetchAssets = async () => {
+  const fetchData = async () => {
     setLoading(true)
     setError("")
     try {
-      const response = await axiosInstance.get("/asset")
-      const res = response.data as assetsInterface[]
+      const [assetRes, transferRes] = await Promise.all([
+        axiosInstance.get("/asset"),
+        axiosInstance.get("/system/transfer-requests"),
+      ])
+      const res = assetRes.data as assetsInterface[]
       const filtered = res.filter((item) => item.location != "CICS" && item.status == "available")
       setAssets(filtered)
+      setTransfers(transferRes.data as transferRequestInterface[])
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {
         const axiosErr = err as { response?: { data?: { message?: string } } }
@@ -139,8 +145,18 @@ export default function Page() {
   }
 
   useEffect(() => {
-    fetchAssets()
+    fetchData()
   }, [])
+
+  const pendingTransfers = useMemo(
+    () => transfers.filter((t) => t.status === "pending"),
+    [transfers]
+  )
+
+  const requestedAssetIds = useMemo(
+    () => new Set(pendingTransfers.map((t) => t.assetId)),
+    [pendingTransfers]
+  )
 
   // Derive unique filter options from assets
   const categories = useMemo(
@@ -208,23 +224,6 @@ export default function Page() {
     setFilterLocation("all")
   }
 
-  const handleAddSuccess = (newAssets: assetsInterface[]) => {
-    setAssets(newAssets)
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this asset?")) return
-    setDeletingId(id)
-    try {
-      await axiosInstance.delete(`/asset/${id}`)
-      setAssets((prev) => prev.filter((a) => a._id !== id))
-    } catch {
-      setError("Failed to delete asset")
-    } finally {
-      setDeletingId(null)
-    }
-  }
-
   const StatusBadge = ({ status }: { status: string }) => {
     const variant = STATUS_VARIANTS[status.toLowerCase()]
     if (!variant) return <span className="capitalize">{status}</span>
@@ -263,7 +262,7 @@ export default function Page() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="icon" onClick={fetchAssets} disabled={loading}>
+          <Button variant="outline" size="icon" onClick={fetchData} disabled={loading}>
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
         
@@ -384,8 +383,10 @@ export default function Page() {
         </div>
       )}
 
-      {/* Table */}
-      <div className="rounded-lg border bg-card overflow-hidden">
+      {/* Grid: University Assets + Pending Transfers */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
+        {/* University Assets Table */}
+        <div className="xl:col-span-2 rounded-lg border bg-card overflow-hidden">
         <div className="overflow-x-auto">
           <Table>
             <TableCaption className="py-3">
@@ -478,9 +479,24 @@ export default function Page() {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredAssets.map((asset) => (
-                  <TableRow key={asset._id}>
-                    <TableCell className="font-medium">{asset.name}</TableCell>
+                filteredAssets.map((asset) => {
+                  const isRequested = requestedAssetIds.has(asset._id)
+                  return (
+                  <TableRow
+                    key={asset._id}
+                    className={isRequested ? "bg-amber-500/5" : ""}
+                  >
+                    <TableCell className="font-medium">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate">{asset.name}</span>
+                        {isRequested && (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600 shrink-0">
+                            <Send className="h-3 w-3" />
+                            Requested
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{asset.date}</TableCell>
                     <TableCell className="capitalize">{asset.category}</TableCell>
                     <TableCell className="text-sm font-medium tabular-nums">
@@ -514,22 +530,118 @@ export default function Page() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
-                       
-                       
-
-
-                       
+                        {isRequested ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600">
+                            <Clock className="h-3 w-3" />
+                            Pending
+                          </span>
+                        ) : (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-amber-600"
+                            onClick={() => {
+                              setTransferAsset(asset)
+                              setTransferDialogOpen(true)
+                            }}
+                            title="Request Transfer"
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
+                  )
+                })
               )}
             </TableBody>
           </Table>
         </div>
       </div>
 
-   
+        {/* Pending Transfer Requests */}
+        <div className="rounded-lg border bg-card overflow-hidden">
+          <div className="px-4 py-3 border-b flex items-center gap-2 bg-amber-500/5">
+            <Send className="h-4 w-4 text-amber-500" />
+            <h2 className="font-semibold text-sm">Pending Transfer Requests</h2>
+            <span className="ml-auto text-xs text-muted-foreground">
+              {pendingTransfers.length} pending
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>
+                    <div className="flex items-center gap-1.5">
+                      <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                      Asset
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-1.5">
+                      <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                      Destination
+                    </div>
+                  </TableHead>
+                  <TableHead>
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                      Date
+                    </div>
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-32" /></TableCell>
+                      <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    </TableRow>
+                  ))
+                ) : pendingTransfers.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={3} className="h-32 text-center text-muted-foreground">
+                      <div className="flex flex-col items-center gap-2">
+                        <Send className="h-8 w-8 text-muted-foreground/40" />
+                        <span>No pending transfer requests.</span>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  pendingTransfers.map((req) => (
+                    <TableRow key={req._id}>
+                      <TableCell className="font-medium">{req.assetname}</TableCell>
+                      <TableCell>
+                        {req.college ? (
+                          <span className="inline-flex items-center gap-1 text-sm">
+                            <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                            <span className="truncate max-w-[120px]">{req.college}</span>
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground italic text-sm">Main Office</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground whitespace-nowrap">{req.date}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </div>
+
+      {/* Transfer Request Dialog */}
+      <TransferRequestModal
+        open={transferDialogOpen}
+        onOpenChange={setTransferDialogOpen}
+        asset={transferAsset}
+        onSuccess={fetchData}
+      />
     </div>
   )
 }
