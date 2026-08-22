@@ -1,4 +1,4 @@
-"use client"
+﻿"use client"
 
 import { useEffect, useMemo, useState } from "react"
 import axiosInstance from "@/app/utils/axios"
@@ -16,8 +16,10 @@ import {
   Cell,
   BarChart,
   Bar,
+
   AreaChart,
   Area,
+
   XAxis,
   YAxis,
   CartesianGrid,
@@ -166,8 +168,6 @@ export default function Page() {
   const [error, setError] = useState("")
 
   const fetchData = async () => {
-    setLoading(true)
-    setError("")
     try {
       const [userRes, assetRes, deptRes, transferRes, disposalRes] =
         await Promise.all([
@@ -182,6 +182,7 @@ export default function Page() {
       setDepartments(deptRes.data as collegeInterface[])
       setTransfers(transferRes.data as transferRequestInterface[])
       setDisposals(disposalRes.data as disposalRecordInterface[])
+      setError("")
     } catch {
       setError("Failed to fetch dashboard data")
     } finally {
@@ -189,7 +190,13 @@ export default function Page() {
     }
   }
 
+  const handleRefresh = () => {
+    setLoading(true)
+    fetchData()
+  }
+
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData()
   }, [])
 
@@ -372,7 +379,7 @@ export default function Page() {
             System-wide overview of users, assets, departments, and transfer requests.
           </p>
         </div>
-        <Button variant="outline" size="icon" onClick={fetchData} disabled={loading}>
+        <Button variant="outline" size="icon" onClick={handleRefresh} disabled={loading}>
           <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
         </Button>
       </div>

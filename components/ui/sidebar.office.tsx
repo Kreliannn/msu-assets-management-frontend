@@ -32,6 +32,7 @@ import {
 
 const navigationItems = [
   { title: "Dashboard", url: "/pages/office/home", icon: Home },
+
   { title: "Property Inventory", url: "/pages/office/inventory", icon: Package },
   { title: "College & Offices", url: "/pages/office/college", icon: Building2 },
   { title: "Users", url: "/pages/office/users", icon: Users },
@@ -40,6 +41,7 @@ const navigationItems = [
   { title: "Logs", url: "/pages/office/logs", icon: FileText },
   { title: "Reports", url: "/pages/office/report", icon: BarChart3 },
 ];
+
 const accountItems = [
   { title: "Logout", url: "/", icon: LogOut }
 ]

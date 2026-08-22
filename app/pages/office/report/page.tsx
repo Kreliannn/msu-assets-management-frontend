@@ -47,6 +47,15 @@ const REPORTS: ReportConfig[] = [
     Modal: CollegeInventoryReportModal,
   },
   {
+
+    id: "borrowing",
+    title: "Borrowing Report",
+    description: "All asset borrowing and return records.",
+    icon: HandHelping,
+    Modal: BorrowingReportModal,
+  },
+  {
+
     id: "disposal",
     title: "Disposal Report",
     description: "All asset disposal records with details.",
