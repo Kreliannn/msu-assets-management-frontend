@@ -6,6 +6,7 @@ import { accountInterface } from "@/app/types/account.type"
 import { assetsInterface } from "@/app/types/asset.type"
 import { collegeInterface } from "@/app/types/college.type"
 import { transferRequestInterface } from "@/app/types/transferRequest.type"
+import { disposalRecordInterface } from "@/app/types/disposalRecord.type"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -15,6 +16,8 @@ import {
   Cell,
   BarChart,
   Bar,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -33,7 +36,12 @@ import {
   AlertCircle,
   RefreshCw,
   LayoutDashboard,
+  Trash2,
+  Coins,
+  Percent,
+  Activity,
 } from "lucide-react"
+import type { ReactNode } from "react"
 
 const STATUS_COLORS: Record<string, string> = {
   available: "#10b981",
@@ -62,11 +70,98 @@ const ROLE_COLORS = [
   "#14b8a6",
 ]
 
+const CONDITION_COLORS: Record<string, string> = {
+  good: "#10b981",
+  serviceable: "#f59e0b",
+  unserviceable: "#ef4444",
+}
+
+const CONDITION_LABELS: Record<string, string> = {
+  good: "Good",
+  serviceable: "Serviceable",
+  unserviceable: "Unserviceable",
+}
+
+const TRANSFER_STATUS_COLORS: Record<string, string> = {
+  pending: "#f59e0b",
+  approved: "#10b981",
+  rejected: "#ef4444",
+}
+
+const MONTH_NAMES = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+]
+
+const formatPeso = (v: unknown) =>
+  "₱" + Number(v ?? 0).toLocaleString("en-US", { maximumFractionDigits: 2 })
+
+const monthLabel = (key: string) => {
+  const [y, m] = key.split("-")
+  const idx = Number(m) - 1
+  return MONTH_NAMES[idx] ? `${MONTH_NAMES[idx]} ${y}` : key
+}
+
+const monthlySeries = (dates: string[], limit = 12) => {
+  const counts: Record<string, number> = {}
+  dates.forEach((d) => {
+    if (!d || d.length < 7) return
+    const key = d.slice(0, 7)
+    counts[key] = (counts[key] || 0) + 1
+  })
+  return Object.entries(counts)
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .slice(-limit)
+    .map(([key, value]) => ({ name: monthLabel(key), value }))
+}
+
+function ChartCard({
+  title,
+  loading,
+  empty,
+  children,
+}: {
+  title: string
+  loading?: boolean
+  empty?: boolean
+  children: ReactNode
+}) {
+  return (
+    <div className="rounded-lg border bg-card overflow-hidden">
+      <div className="px-4 py-3 border-b">
+        <h2 className="font-semibold text-sm">{title}</h2>
+      </div>
+      <div className="p-4">
+        {loading ? (
+          <Skeleton className="h-[300px] w-full" />
+        ) : empty ? (
+          <p className="h-[300px] flex items-center justify-center text-sm text-muted-foreground">
+            No data available.
+          </p>
+        ) : (
+          children
+        )}
+      </div>
+    </div>
+  )
+}
+
 export default function Page() {
   const [users, setUsers] = useState<accountInterface[]>([])
   const [assets, setAssets] = useState<assetsInterface[]>([])
   const [departments, setDepartments] = useState<collegeInterface[]>([])
   const [transfers, setTransfers] = useState<transferRequestInterface[]>([])
+  const [disposals, setDisposals] = useState<disposalRecordInterface[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
 
@@ -74,16 +169,19 @@ export default function Page() {
     setLoading(true)
     setError("")
     try {
-      const [userRes, assetRes, deptRes, transferRes] = await Promise.all([
-        axiosInstance.get("/account"),
-        axiosInstance.get("/asset"),
-        axiosInstance.get("/college"),
-        axiosInstance.get("/system/transfer-requests"),
-      ])
+      const [userRes, assetRes, deptRes, transferRes, disposalRes] =
+        await Promise.all([
+          axiosInstance.get("/account"),
+          axiosInstance.get("/asset"),
+          axiosInstance.get("/college"),
+          axiosInstance.get("/system/transfer-requests"),
+          axiosInstance.get("/system/disposal-records"),
+        ])
       setUsers(userRes.data as accountInterface[])
       setAssets(assetRes.data as assetsInterface[])
       setDepartments(deptRes.data as collegeInterface[])
       setTransfers(transferRes.data as transferRequestInterface[])
+      setDisposals(disposalRes.data as disposalRecordInterface[])
     } catch {
       setError("Failed to fetch dashboard data")
     } finally {
@@ -103,15 +201,24 @@ export default function Page() {
   const stats = useMemo(() => {
     const countByStatus = (s: string) =>
       assets.filter((a) => a.status.toLowerCase() === s).length
+    const total = assets.length
+    const disposed = countByStatus("disposed")
+    const inUse = countByStatus("in use")
+    const borrowed = countByStatus("borrowed")
     return {
       users: users.length,
-      assets: assets.length,
+      assets: total,
       departments: departments.length,
       pendingTransfers: pendingTransfers.length,
       available: countByStatus("available"),
-      inUse: countByStatus("in use"),
-      borrowed: countByStatus("borrowed"),
+      inUse,
+      borrowed,
       underRepair: countByStatus("underrepair"),
+      disposed,
+      totalValue: assets.reduce((sum, a) => sum + (Number(a.value) || 0), 0),
+      disposalRate: total > 0 ? (disposed / total) * 100 : 0,
+      utilizationRate:
+        total > 0 ? ((inUse + borrowed) / total) * 100 : 0,
     }
   }, [users, assets, departments, pendingTransfers])
 
@@ -168,6 +275,68 @@ export default function Page() {
       }))
   }, [assets])
 
+  const conditionData = useMemo(() => {
+    const counts: Record<string, number> = {}
+    assets.forEach((a) => {
+      const c = a.condition.toLowerCase()
+      counts[c] = (counts[c] || 0) + 1
+    })
+    return Object.entries(counts).map(([c, value]) => ({
+      name: CONDITION_LABELS[c] || c.charAt(0).toUpperCase() + c.slice(1),
+      value,
+      fill: CONDITION_COLORS[c] || "#94a3b8",
+    }))
+  }, [assets])
+
+  const transferStatusData = useMemo(() => {
+    const counts: Record<string, number> = {}
+    transfers.forEach((t) => {
+      counts[t.status] = (counts[t.status] || 0) + 1
+    })
+    return Object.entries(counts).map(([status, value]) => ({
+      name: status.charAt(0).toUpperCase() + status.slice(1),
+      value,
+      fill: TRANSFER_STATUS_COLORS[status] || "#94a3b8",
+    }))
+  }, [transfers])
+
+  const acquisitionTrend = useMemo(
+    () => monthlySeries(assets.map((a) => a.date)),
+    [assets]
+  )
+
+  const disposalsTrend = useMemo(
+    () => monthlySeries(disposals.map((d) => d.date)),
+    [disposals]
+  )
+
+  const valueByCategoryData = useMemo(() => {
+    const sums: Record<string, number> = {}
+    assets.forEach((a) => {
+      const cat = a.category.toLowerCase()
+      sums[cat] = (sums[cat] || 0) + (Number(a.value) || 0)
+    })
+    return Object.entries(sums)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([cat, value]) => ({
+        name: cat.charAt(0).toUpperCase() + cat.slice(1),
+        value,
+      }))
+  }, [assets])
+
+  const topCustodiansData = useMemo(() => {
+    const counts: Record<string, number> = {}
+    assets.forEach((a) => {
+      if (!a.custodian) return
+      counts[a.custodian] = (counts[a.custodian] || 0) + 1
+    })
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([name, value]) => ({ name, value }))
+  }, [assets])
+
   const recentPendingTransfers = useMemo(
     () =>
       [...pendingTransfers]
@@ -181,6 +350,13 @@ export default function Page() {
     { label: "Total Assets", value: stats.assets, icon: Package, color: "text-primary bg-primary/10" },
     { label: "Departments", value: stats.departments, icon: Building2, color: "text-emerald-600 bg-emerald-500/10" },
     { label: "Pending Transfers", value: stats.pendingTransfers, icon: Send, color: "text-amber-600 bg-amber-500/10" },
+  ]
+
+  const rateCards = [
+    { label: "Total Asset Value", value: formatPeso(stats.totalValue), icon: Coins, color: "text-yellow-600 bg-yellow-500/10" },
+    { label: "Utilization Rate", value: `${stats.utilizationRate.toFixed(1)}%`, icon: Activity, color: "text-sky-600 bg-sky-500/10" },
+    { label: "Disposed Assets", value: stats.disposed, icon: Trash2, color: "text-red-600 bg-red-500/10" },
+    { label: "Disposal Rate", value: `${stats.disposalRate.toFixed(1)}%`, icon: Percent, color: "text-orange-600 bg-orange-500/10" },
   ]
 
   return (
@@ -220,134 +396,191 @@ export default function Page() {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          {statCards.map((card) => {
-            const Icon = card.icon
-            return (
-              <div
-                key={card.label}
-                className="rounded-lg border bg-card p-4 flex items-center gap-3"
-              >
-                <div className={`flex h-10 w-10 items-center justify-center rounded-full ${card.color}`}>
-                  <Icon className="h-5 w-5" />
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {statCards.map((card) => {
+              const Icon = card.icon
+              return (
+                <div
+                  key={card.label}
+                  className="rounded-lg border bg-card p-4 flex items-center gap-3"
+                >
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-full ${card.color}`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground truncate">{card.label}</p>
+                    <p className="text-2xl font-bold tabular-nums">{card.value}</p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs text-muted-foreground truncate">{card.label}</p>
-                  <p className="text-2xl font-bold tabular-nums">{card.value}</p>
+              )
+            })}
+          </div>
+
+          {/* Rate Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {rateCards.map((card) => {
+              const Icon = card.icon
+              return (
+                <div
+                  key={card.label}
+                  className="rounded-lg border bg-card p-4 flex items-center gap-3"
+                >
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-full ${card.color}`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-xs text-muted-foreground truncate">{card.label}</p>
+                    <p className="text-xl font-bold tabular-nums truncate">{card.value}</p>
+                  </div>
                 </div>
-              </div>
-            )
-          })}
-        </div>
+              )
+            })}
+          </div>
+        </>
       )}
 
-      {/* Charts Row 1 */}
+      {/* Charts Row 1: Status / Department */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="rounded-lg border bg-card overflow-hidden">
-          <div className="px-4 py-3 border-b">
-            <h2 className="font-semibold text-sm">Asset Status Distribution</h2>
-          </div>
-          <div className="p-4">
-            {loading ? (
-              <Skeleton className="h-[300px] w-full" />
-            ) : (
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={statusData}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={60}
-                    outerRadius={95}
-                    paddingAngle={2}
-                  >
-                    {statusData.map((entry, index) => (
-                      <Cell key={index} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
+        <ChartCard title="Asset Status Distribution" loading={loading} empty={statusData.length === 0}>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie data={statusData} dataKey="value" nameKey="name" innerRadius={60} outerRadius={95} paddingAngle={2}>
+                {statusData.map((entry, index) => (
+                  <Cell key={index} fill={entry.fill} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </ChartCard>
 
-        <div className="rounded-lg border bg-card overflow-hidden">
-          <div className="px-4 py-3 border-b">
-            <h2 className="font-semibold text-sm">Assets by Department</h2>
-          </div>
-          <div className="p-4">
-            {loading ? (
-              <Skeleton className="h-[300px] w-full" />
-            ) : (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={departmentData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
-                  <YAxis tickLine={false} axisLine={false} allowDecimals={false} width={30} />
-                  <Tooltip cursor={{ fill: "hsl(var(--muted))" }} />
-                  <Bar dataKey="value" name="Assets" fill="#10b981" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
+        <ChartCard title="Assets by Department" loading={loading} empty={departmentData.length === 0}>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={departmentData}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+              <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
+              <YAxis tickLine={false} axisLine={false} allowDecimals={false} width={30} />
+              <Tooltip cursor={{ fill: "hsl(var(--muted))" }} />
+              <Bar dataKey="value" name="Assets" fill="#10b981" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
       </div>
 
-      {/* Charts Row 2 */}
+      {/* Charts Row 2: Role / Category */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="rounded-lg border bg-card overflow-hidden">
-          <div className="px-4 py-3 border-b">
-            <h2 className="font-semibold text-sm">Users by Role</h2>
-          </div>
-          <div className="p-4">
-            {loading ? (
-              <Skeleton className="h-[300px] w-full" />
-            ) : (
-              <ResponsiveContainer width="100%" height={300}>
-                <PieChart>
-                  <Pie
-                    data={roleData}
-                    dataKey="value"
-                    nameKey="name"
-                    innerRadius={60}
-                    outerRadius={95}
-                    paddingAngle={2}
-                  >
-                    {roleData.map((entry, index) => (
-                      <Cell key={index} fill={entry.fill} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                  <Legend />
-                </PieChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
+        <ChartCard title="Users by Role" loading={loading} empty={roleData.length === 0}>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie data={roleData} dataKey="value" nameKey="name" innerRadius={60} outerRadius={95} paddingAngle={2}>
+                {roleData.map((entry, index) => (
+                  <Cell key={index} fill={entry.fill} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </ChartCard>
 
-        <div className="rounded-lg border bg-card overflow-hidden">
-          <div className="px-4 py-3 border-b">
-            <h2 className="font-semibold text-sm">Assets by Category</h2>
-          </div>
-          <div className="p-4">
-            {loading ? (
-              <Skeleton className="h-[300px] w-full" />
-            ) : (
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={categoryData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
-                  <YAxis tickLine={false} axisLine={false} allowDecimals={false} width={30} />
-                  <Tooltip cursor={{ fill: "hsl(var(--muted))" }} />
-                  <Bar dataKey="value" name="Assets" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-        </div>
+        <ChartCard title="Assets by Category" loading={loading} empty={categoryData.length === 0}>
+          <ResponsiveContainer width="100%" height={300}>
+            <BarChart data={categoryData}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+              <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
+              <YAxis tickLine={false} axisLine={false} allowDecimals={false} width={30} />
+              <Tooltip cursor={{ fill: "hsl(var(--muted))" }} />
+              <Bar dataKey="value" name="Assets" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
       </div>
+
+      {/* Charts Row 3: Condition / Transfer Status */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ChartCard title="Asset Condition Distribution" loading={loading} empty={conditionData.length === 0}>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie data={conditionData} dataKey="value" nameKey="name" innerRadius={60} outerRadius={95} paddingAngle={2}>
+                {conditionData.map((entry, index) => (
+                  <Cell key={index} fill={entry.fill} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Transfer Requests by Status" loading={loading} empty={transferStatusData.length === 0}>
+          <ResponsiveContainer width="100%" height={300}>
+            <PieChart>
+              <Pie data={transferStatusData} dataKey="value" nameKey="name" innerRadius={60} outerRadius={95} paddingAngle={2}>
+                {transferStatusData.map((entry, index) => (
+                  <Cell key={index} fill={entry.fill} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      </div>
+
+      {/* Acquisitions Trend */}
+      <ChartCard title="Asset Acquisitions Trend (Monthly)" loading={loading} empty={acquisitionTrend.length === 0}>
+        <ResponsiveContainer width="100%" height={300}>
+          <AreaChart data={acquisitionTrend}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+            <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
+            <YAxis tickLine={false} axisLine={false} allowDecimals={false} width={30} />
+            <Tooltip labelFormatter={(label) => `Month: ${label}`} />
+            <Area type="monotone" dataKey="value" name="Acquired" stroke="#6366f1" fill="#6366f1" fillOpacity={0.15} strokeWidth={2} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </ChartCard>
+
+      {/* Charts Row 4: Value by Category / Disposals per Month */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ChartCard title="Asset Value by Category (Top 8)" loading={loading} empty={valueByCategoryData.length === 0}>
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={valueByCategoryData} layout="vertical">
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+              <XAxis type="number" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
+              <YAxis type="category" dataKey="name" width={120} tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
+              <Tooltip cursor={{ fill: "hsl(var(--muted))" }} formatter={(value) => [formatPeso(value), "Total Value"]} />
+              <Bar dataKey="value" fill="#eab308" radius={[0, 4, 4, 0]} barSize={18} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+
+        <ChartCard title="Disposals per Month" loading={loading} empty={disposalsTrend.length === 0}>
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={disposalsTrend}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+              <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fontSize: 11 }} />
+              <YAxis tickLine={false} axisLine={false} allowDecimals={false} width={30} />
+              <Tooltip cursor={{ fill: "hsl(var(--muted))" }} labelFormatter={(label) => `Month: ${label}`} />
+              <Bar dataKey="value" name="Disposals" fill="#ef4444" radius={[4, 4, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartCard>
+      </div>
+
+      {/* Top Custodians */}
+      <ChartCard title="Top Custodians by Asset Count" loading={loading} empty={topCustodiansData.length === 0}>
+        <ResponsiveContainer width="100%" height={Math.max(200, topCustodiansData.length * 40)}>
+          <BarChart data={topCustodiansData} layout="vertical">
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
+            <XAxis type="number" tickLine={false} axisLine={false} allowDecimals={false} tick={{ fontSize: 12 }} />
+            <YAxis type="category" dataKey="name" width={180} tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
+            <Tooltip cursor={{ fill: "hsl(var(--muted))" }} />
+            <Bar dataKey="value" name="Assets" fill="#8b5cf6" radius={[0, 4, 4, 0]} barSize={18} />
+          </BarChart>
+        </ResponsiveContainer>
+      </ChartCard>
 
       {/* Asset Status Summary */}
       {!loading && (

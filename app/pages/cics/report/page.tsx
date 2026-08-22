@@ -3,21 +3,15 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { AssetListReportModal } from "./components/assetListReportModal"
-import { CollegeInventoryReportModal } from "./components/collegeInventoryReportModal"
 import { BorrowingReportModal } from "./components/borrowingReportModal"
 import { DisposalReportModal } from "./components/disposalReportModal"
 import { ConditionReportModal } from "./components/conditionReportModal"
-import { AuditTrailReportModal } from "./components/auditTrailReportModal"
-import { CustodianReportModal } from "./components/custodianReportModal"
 import { TransferReportModal } from "./components/transferReportModal"
 import {
   FileText,
-  Building2,
   HandHelping,
   Trash2,
   Wrench,
-  ScrollText,
-  User,
   Send,
   type LucideIcon,
 } from "lucide-react"
@@ -35,49 +29,35 @@ const REPORTS: ReportConfig[] = [
   {
     id: "assetList",
     title: "Complete Asset List",
-    description: "All registered property assets with their current details.",
+    description: "All registered CICS property assets with their current details.",
     icon: FileText,
     Modal: AssetListReportModal,
   },
   {
-    id: "collegeInventory",
-    title: "College Inventory",
-    description: "Inventory grouped by asset location / department.",
-    icon: Building2,
-    Modal: CollegeInventoryReportModal,
+    id: "borrowing",
+    title: "Borrowing Report",
+    description: "All asset borrowing and return records.",
+    icon: HandHelping,
+    Modal: BorrowingReportModal,
   },
   {
     id: "disposal",
     title: "Disposal Report",
-    description: "All asset disposal records with details.",
+    description: "All CICS asset disposal records with details.",
     icon: Trash2,
     Modal: DisposalReportModal,
   },
   {
     id: "condition",
     title: "Asset Condition Report",
-    description: "Summary of assets grouped by condition.",
+    description: "Summary of CICS assets grouped by condition.",
     icon: Wrench,
     Modal: ConditionReportModal,
   },
   {
-    id: "audit",
-    title: "Audit Trail",
-    description: "System activity logs and transaction history.",
-    icon: ScrollText,
-    Modal: AuditTrailReportModal,
-  },
-  {
-    id: "custodian",
-    title: "Custodian Report",
-    description: "Department custodians and deans from college records.",
-    icon: User,
-    Modal: CustodianReportModal,
-  },
-  {
     id: "transfer",
     title: "Transfer Report",
-    description: "All asset transfer requests and their status.",
+    description: "All CICS asset transfer requests and their status.",
     icon: Send,
     Modal: TransferReportModal,
   },
@@ -97,7 +77,7 @@ export default function Page() {
           Reports
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Generate and download system reports. Each report can be exported as a PDF.
+          Generate and download CICS reports. Each report can be exported as a PDF.
         </p>
       </div>
 

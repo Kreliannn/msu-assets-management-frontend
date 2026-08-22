@@ -19,12 +19,21 @@ import {
 } from "@/components/ui/sidebar"
 import { useQueryClient } from "@tanstack/react-query"
 
+import {
+  
+BarChart3,
+  University,
+  Package,
+  HandCoins,
+} from "lucide-react";
+
 const navigationItems = [
   { title: "Dashboard", url: "/pages/cics/home", icon: Home },
-  { title: "school property", url: "/pages/cics/universityInventory", icon: UserPlus2 },
-  { title: "cics property", url: "/pages/cics/cicsInventory", icon: Building },
-   { title: "Borrow Asset", url: "/pages/cics/borrow", icon: Building },
-]
+  { title: "University Property", url: "/pages/cics/universityInventory", icon: University },
+  { title: "CICS Property", url: "/pages/cics/cicsInventory", icon: Package },
+  { title: "Borrow Asset", url: "/pages/cics/borrow", icon: HandCoins },
+   { title: "Reports", url: "/pages/cics/report", icon: BarChart3 },
+];
 
 const accountItems = [
   { title: "Logout", url: "/", icon: LogOut }

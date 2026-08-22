@@ -18,19 +18,28 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import { useQueryClient } from "@tanstack/react-query"
+import {
+  
+  Package,
+  Building2,
+  Users,
+  ArrowLeftRight,
+  History,
+  Trash2,
+  FileText,
+  BarChart3,
+} from "lucide-react";
 
 const navigationItems = [
   { title: "Dashboard", url: "/pages/office/home", icon: Home },
-  { title: "Property Inventory", url: "/pages/office/inventory", icon: UserPlus2 },
-  { title: "Department", url: "/pages/office/college", icon: UserPlus2 },
-    { title: "users", url: "/pages/office/users", icon: UserPlus2 },
-  { title: "Transfer Request", url: "/pages/office/transferRequest", icon: UserPlus2 },
-  { title: "Transfer History", url: "/pages/office/transferHistory", icon: UserPlus2 },
-  { title: "Disposal Record", url: "/pages/office/disposalRecord", icon: UserPlus2 },
-    { title: "Logs", url: "/pages/office/logs", icon: UserPlus2 },
-        { title: "Reports", url: "/pages/office/report", icon: UserPlus2 },
-]
-
+  { title: "Property Inventory", url: "/pages/office/inventory", icon: Package },
+  { title: "College & Offices", url: "/pages/office/college", icon: Building2 },
+  { title: "Users", url: "/pages/office/users", icon: Users },
+  { title: "Transfer Request", url: "/pages/office/transferRequest", icon: ArrowLeftRight },
+  { title: "Disposal Record", url: "/pages/office/disposalRecord", icon: Trash2 },
+  { title: "Logs", url: "/pages/office/logs", icon: FileText },
+  { title: "Reports", url: "/pages/office/report", icon: BarChart3 },
+];
 const accountItems = [
   { title: "Logout", url: "/", icon: LogOut }
 ]
@@ -71,7 +80,7 @@ export function SideBarOffice({ className }: AppSidebarProps) {
               className="text-[#DAB368] font-light tracking-[0.1em] uppercase text-sm"
               style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
             >
-              main office
+             main system
             </span>
             <span className="text-[10px] text-[#595959] tracking-[0.2em] uppercase">Admin</span>
           </div>
@@ -170,7 +179,7 @@ export function SideBarOffice({ className }: AppSidebarProps) {
                       className="truncate text-[#DAB368] font-light tracking-[0.1em] uppercase text-sm"
                       style={{ fontFamily: "'Cormorant Garamond', Georgia, serif" }}
                     >
-                      main office
+                     main system
                     </span>
                     <span className="truncate text-[10px] text-[#FFFFFF]/60 tracking-[0.2em] uppercase">
                       Admin
